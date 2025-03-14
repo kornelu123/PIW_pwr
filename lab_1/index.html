@@ -1,0 +1,46 @@
+<head>
+  <meta charset="UTF-8">
+  <title>BookLoupe</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header>
+    <h1>BookLoupe</h1>
+    <div>
+      <button id="loginBtn">Log in/Log out</button>
+      <button id="cartBtn">Cart</button>
+      <button id="addBookBtn" onclick="location.href='index2.html'">Add new book</button>
+    </div>
+  </header>
+
+  <section class="filters">
+    <input type="text" id="search" placeholder="Search book">
+    <select id="coverType">
+      <option value="">Cover</option>
+      <option value="hard">Hard</option>
+      <option value="soft">Soft</option>
+    </select>
+    <input type="number" id="minPages" placeholder="Min. no of pages">
+    <input type="text" id="author" placeholder="Author">
+    <input type="text" id="description" placeholder="Description">
+    <button id="applyFilters">Apply filters</button>
+  </section>
+
+  <section class="book-list">
+    <div class="book-card">
+      <h2>Book name</h2>
+      <p>Author: Wyson Sirrius</p>
+      <p>Price: 49.99 $</p>
+      <p>Cover: Hard</p>
+      <p>Page count: 320</p>
+      <p>Description: This original graphic novel tells the story of one very dark night in Gotham City-the Joker has been mysteriously released from Arkham Asylum, and he's none too happy about what's happened to his Gotham City rackets while he's been "away." </p>
+      <button>Add to cart</button>
+    </div>
+  </section>
+
+  <footer>
+    <p>© 2025 BookLoupe</p>
+  </footer>
+</body>
+</html>
