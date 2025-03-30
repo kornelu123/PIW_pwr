@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple ToDo List</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>ToDo List</h1>
+
+        <div class="input-area">
+            <input type="text" id="newListInput" placeholder="New list name">
+            <button id="addListBtn">Add List</button>
+        </div>
+
+        <div class="input-area">
+            <input type="text" id="taskInput" placeholder="New task">
+            <select id="listSelect">
+                <option value="urgent">Urgent</option>
+                <option value="important">Important</option>
+            </select>
+            <button id="addTaskBtn">Add Task</button>
+        </div>
+
+        <div id="undoNotification" class="hidden">
+            Task deleted. <a href="#" id="undoLink">Undo</a>
+        </div>
+
+        <div id="listsContainer"></div>
+    </div>
+
+    <div id="deleteModal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Confirm Delete</h3>
+            <p>Delete task: <span id="modalTaskText"></span>?</p>
+            <div class="modal-buttons">
+                <button id="confirmDelete">Delete</button>
+                <button id="cancelDelete">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
