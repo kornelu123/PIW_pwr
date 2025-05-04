@@ -1,7 +1,9 @@
 // routes/new.jsx
-import { useState } from 'react';
-import { useBooks } from '../root.jsx';
+import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/use-auth';
+import { db } from '../firebase.js';
+import { collection, addDoc } from 'firebase/firestore';
 
 export function meta() {
   return [
@@ -11,7 +13,7 @@ export function meta() {
 }
 
 export default function NewBook() {
-  const { books, setBooks } = useBooks();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     title: "",
@@ -23,26 +25,36 @@ export default function NewBook() {
 
   const genres = ["Fiction", "Dystopian", "Romance", "Fantasy"];
 
-  const handleInputChange = (e) => {
+  const handleInputChange = useCallback((e) => {
     const { name, value, type, checked } = e.target;
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       [name]: type === 'checkbox' ? checked : value,
-    });
-  };
+    }));
+  }, []);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const newBook = {
-      id: books.length + 1, // Simple ID generation (replace with UUID in production)
-      title: formData.title,
-      author: formData.author,
-      genre: formData.genre,
-      price: parseFloat(formData.price) || 0,
-      inStock: formData.inStock,
-    };
-    setBooks([...books, newBook]);
-    navigate('/'); // Redirect to home after adding
+    if (!user) {
+      alert("You must be logged in to add a book.");
+      navigate('/login');
+      return;
+    }
+
+    try {
+      await addDoc(collection(db, 'books'), {
+        title: formData.title,
+        author: formData.author,
+        genre: formData.genre,
+        price: parseFloat(formData.price) || 0,
+        inStock: formData.inStock,
+        ownerId: user.uid,
+      });
+      navigate('/');
+    } catch (error) {
+      console.error("Error adding book:", error);
+      alert("Failed to add book.");
+    }
   };
 
   return (
@@ -84,7 +96,7 @@ export default function NewBook() {
               required
             >
               <option value="">Select Genre</option>
-              {genres.map(genre => (
+              {genres.map((genre) => (
                 <option key={genre} value={genre}>{genre}</option>
               ))}
             </select>

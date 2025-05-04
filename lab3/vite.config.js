@@ -9,4 +9,5 @@ export default defineConfig({
     ssr: false,
     sourcemap: false,
   },
+  root: '.',
 });
