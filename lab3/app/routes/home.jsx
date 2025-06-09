@@ -1,8 +1,9 @@
-// routes/home.jsx
+// app/routes/home.jsx
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useAuth } from '../root.jsx';
 import { db } from '../firebase.js';
 import { collection, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { useFavorites } from '../contexts/items.jsx';
 
 export function meta() {
   return [
@@ -16,15 +17,15 @@ const genres = ["Fiction", "Dystopian", "Romance", "Fantasy"];
 export default function Home() {
   const { user } = useAuth();
   const [books, setBooks] = useState([]);
+  const { state: favoritesState, dispatch } = useFavorites();
   const [filters, setFilters] = useState({
     searchTerm: "",
     genre: "",
     inStock: false,
     maxPrice: "",
-    myBooksOnly: false, // New filter for "MOJE"
+    myBooksOnly: false,
   });
 
-  // Fetch books from Firestore
   useEffect(() => {
     const fetchBooks = async () => {
       const querySnapshot = await getDocs(collection(db, 'books'));
@@ -37,7 +38,6 @@ export default function Home() {
     fetchBooks();
   }, []);
 
-  // Filter books based on current filters
   const filteredBooks = useMemo(() => {
     return books.filter((book) => {
       const matchesSearch =
@@ -77,6 +77,12 @@ export default function Home() {
     setBooks(books.filter((book) => book.id !== id));
   };
 
+  const addToFavorites = (book) => {
+    if (!favoritesState.favorites.find((fav) => fav.id === book.id)) {
+      dispatch({ type: 'ADD_TO_FAVORITES', payload: book });
+    }
+  };
+
   return (
     <main className="pt-16 p-4 container mx-auto max-w-3xl">
       <div className="flex items-center justify-between mb-6">
@@ -110,17 +116,17 @@ export default function Home() {
               name="searchTerm"
               value={filters.searchTerm}
               onChange={handleInputChange}
-              className="w-full p-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition"
+              className="w-full p-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition"
               placeholder="Title or author..."
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">Genre</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Genre</label>
             <select
               name="genre"
               value={filters.genre}
               onChange={handleInputChange}
-              className="w-full p-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition"
+              className="w-full p-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition"
             >
               <option value="">All Genres</option>
               {genres.map((genre) => (
@@ -148,7 +154,7 @@ export default function Home() {
               name="maxPrice"
               value={filters.maxPrice}
               onChange={handleInputChange}
-              className="w-full p-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition"
+              className="w-full p-2.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition"
               placeholder="$ Max..."
             />
           </div>
@@ -162,11 +168,11 @@ export default function Home() {
             <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">Try adjusting your filters.</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <ul className="book-list space-y-4">
             {filteredBooks.map((book) => (
-              <div
+              <li
                 key={book.id}
-                className="border-b border-gray-200 dark:border-gray-700 py-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+                className="book-item border-b border-gray-200 dark:border-gray-700 py-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
               >
                 <div className="grid grid-cols-1 sm:grid-cols-6 gap-4 items-center">
                   <div className="sm:col-span-2">
@@ -188,31 +194,40 @@ export default function Home() {
                       {book.inStock ? 'In Stock' : 'Out of Stock'}
                     </span>
                   </div>
-                  {user && book.ownerId === user.uid && (
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => {
-                          const newTitle = prompt("Enter new title:", book.title);
-                          if (newTitle) {
-                            updateBook(book.id, { title: newTitle });
-                          }
-                        }}
-                        className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md text-white bg-blue-500 hover:bg-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-500 transition"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => deleteBook(book.id)}
-                        className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md text-white bg-red-500 hover:bg-red-600 focus:outline-none focus:ring-1 focus:ring-red-500 transition"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  )}
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => addToFavorites(book)}
+                      disabled={favoritesState.favorites.find((fav) => fav.id === book.id)}
+                      className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md text-white bg-green-500 hover:bg-green-600 focus:outline-none focus:ring-1 focus:ring-green-500 transition disabled:bg-gray-500"
+                    >
+                      Add to Favorites
+                    </button>
+                    {user && book.ownerId === user.uid && (
+                      <>
+                        <button
+                          onClick={() => {
+                            const newTitle = prompt("Enter new title:", book.title);
+                            if (newTitle) {
+                              updateBook(book.id, { title: newTitle });
+                            }
+                          }}
+                          className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md text-white bg-blue-500 hover:bg-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-500 transition"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => deleteBook(book.id)}
+                          className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md text-white bg-red-500 hover:bg-red-600 focus:outline-none focus:ring-1 focus:ring-red-500 transition"
+                        >
+                          Delete
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
-              </div>
+              </li>
             ))}
-          </div>
+          </ul>
         )}
       </div>
     </main>

@@ -17,6 +17,49 @@ import NewBook from './routes/new.jsx';
 import Login from './routes/login.jsx';
 import Register from './routes/register.jsx';
 import './app.css';
+import { FavoritesProvider, useFavorites } from './contexts/items.jsx';
+
+function FavoritesModal() {
+  const { state, dispatch } = useFavorites();
+  const [showModal, setShowModal] = useState(false);
+
+  const removeFromFavorites = (bookId) => {
+    dispatch({ type: 'REMOVE_FROM_FAVORITES', payload: { id: bookId } });
+  };
+
+  return (
+    <>
+      <button
+        className="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 transition"
+        onClick={() => setShowModal(true)}
+      >
+        Favorites ({state.favorites.length})
+      </button>
+      {showModal && (
+        <div className="modal">
+          <div className="modal-content">
+            <h2>Your Favorites</h2>
+            {state.favorites.length === 0 ? (
+              <p>No books in favorites.</p>
+            ) : (
+              <ul>
+                {state.favorites.map((book) => (
+                  <li key={`${book.id}-favorite`} className="modal-content li">
+                    {book.title} by {book.author}
+                    <button onClick={() => removeFromFavorites(book.id)}>
+                      Remove
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <button onClick={() => setShowModal(false)}>Close</button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
 
 export const links = () => [
   { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
@@ -35,16 +78,18 @@ export function RootLayout() {
   return (
     <html lang='en'>
       <head>
-        <meta charSet='utf-8' />
-        <meta name='viewport' content='width=device-width, initial-scale=1' />
-        <Meta />
-        <Links />
-      </head>
-      <body className='font-sans bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100'>
-        <Outlet />
-        <ScrollRestoration />
-        <Scripts />
-      </body>
+    <meta charSet='utf-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1' />
+    <Meta />
+    <Links />
+    </head>
+    <body className='font-sans bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100'>
+    <FavoritesProvider>
+    <Outlet />
+    </FavoritesProvider>
+    <ScrollRestoration />
+    <Scripts />
+    </body>
     </html>
   );
 }
@@ -61,46 +106,47 @@ function AppLayout() {
 
   return (
     <>
-      <header className='bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700'>
-        <nav className='container mx-auto px-4 py-3 flex justify-between items-center'>
-          <div className='flex items-center space-x-2'>
-            <Link to="/" className='text-xl font-bold'>📚 Book Search</Link>
-          </div>
-          <div className='flex space-x-4'>
-            <Link to="/" className='text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 transition'>
-              Home
-            </Link>
-            <Link to="/new" className='text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 transition'>
-              Add Book
-            </Link>
-            {user ? (
-              <>
-                <Link to="/my-books" className='text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 transition'>
-                  My Books
-                </Link>
-                <button
-                  onClick={() => auth.signOut()}
-                  className='text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 transition'
-                >
-                  Logout
-                </button>
-              </>
-            ) : (
-              <>
-                <Link to="/login" className='text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 transition'>
-                  Login
-                </Link>
-                <Link to="/register" className='text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 transition'>
-                  Register
-                </Link>
-              </>
-            )}
-          </div>
-        </nav>
-      </header>
-      <main className="container mx-auto px-4 py-6">
-        <Outlet context={{ user }} />
-      </main>
+    <header className='bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700'>
+    <nav className='container mx-auto px-4 py-3 flex justify-between items-center'>
+    <div className='flex items-center space-x-2'>
+    <Link to="/" className='text-xl font-bold'>📚 Book Search</Link>
+    </div>
+    <div className='flex space-x-4'>
+    <Link to="/" className='text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 transition'>
+    Home
+    </Link>
+    <Link to="/new" className='text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 transition'>
+    Add Book
+    </Link>
+    {user ? (
+  <>
+    <Link to="/my-books" className='text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 transition'>
+      My Books
+    </Link>
+    <FavoritesModal />
+    <button
+      onClick={() => auth.signOut()}
+      className='text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 transition'
+    >
+      Logout
+    </button>
+  </>
+    ) : (
+      <>
+      <Link to="/login" className='text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 transition'>
+      Login
+      </Link>
+      <Link to="/register" className='text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 transition'>
+      Register
+      </Link>
+      </>
+    )}
+    </div>
+    </nav>
+    </header>
+    <main className="container mx-auto px-4 py-6">
+    <Outlet context={{ user }} />
+    </main>
     </>
   );
 }
@@ -108,15 +154,15 @@ function AppLayout() {
 export default function App() {
   return (
     <Routes>
-      <Route element={<RootLayout />}>
-        <Route element={<AppLayout />}>
-          <Route index element={<Home />} />
-          <Route path='new' element={<NewBook />} />
-          <Route path='login' element={<Login />} />
-          <Route path='register' element={<Register />} />
-          <Route path='my-books' element={<Home />} />
-        </Route>
-      </Route>
+    <Route element={<RootLayout />}>
+    <Route element={<AppLayout />}>
+    <Route index element={<Home />} />
+    <Route path='new' element={<NewBook />} />
+    <Route path='login' element={<Login />} />
+    <Route path='register' element={<Register />} />
+    <Route path='my-books' element={<Home />} />
+    </Route>
+    </Route>
     </Routes>
   );
 }

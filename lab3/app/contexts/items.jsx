@@ -1,54 +1,55 @@
-// contexts/items.jsx
-import { createContext, useContext, useState } from "react";
+// app/contexts/items.jsx
+import { createContext, useContext, useReducer, useEffect } from 'react';
 
-const ItemsContext = createContext();
+const initialState = {
+  favorites: [],
+};
 
-export function ItemsProvider({ children }) {
-  const [items, setItems] = useState([
-    { id: 1, name: "Item 1", category: "Electronics", price: 100, inStock: true },
-    { id: 2, name: "Item 2", category: "Clothing", price: 50, inStock: false },
-    { id: 3, name: "Item 3", category: "Books", price: 20, inStock: true },
-    { id: 4, name: "Item 4", category: "Electronics", price: 200, inStock: true },
-    { id: 5, name: "Item 5", category: "Home", price: 150, inStock: false },
-  ]);
+const reducer = (state, action) => {
+  switch (action.type) {
+    case 'INITIALIZE_FAVORITES': {
+      return { ...state, favorites: action.payload };
+    }
+    case 'ADD_TO_FAVORITES': {
+      const updatedFavorites = [...state.favorites, action.payload];
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
+      }
+      return { ...state, favorites: updatedFavorites };
+    }
+    case 'REMOVE_FROM_FAVORITES': {
+      const updatedFavorites = state.favorites.filter(
+        (book) => book.id !== action.payload.id
+      );
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
+      }
+      return { ...state, favorites: updatedFavorites };
+    }
+    default:
+      return state;
+  }
+};
 
-  const [filters, setFilters] = useState({
-    searchTerm: "",
-    category: "",
-    inStock: false,
-    maxPrice: "",
-  });
+const FavoritesContext = createContext();
 
-  const updateItem = (id, updatedData) => {
-    setItems(items.map(item => 
-      item.id === id ? { ...item, ...updatedData } : item
-    ));
-  };
+export function FavoritesProvider({ children }) {
+  const [state, dispatch] = useReducer(reducer, initialState);
 
-  const filteredItems = items.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(filters.searchTerm.toLowerCase());
-    const matchesCategory = !filters.category || item.category === filters.category;
-    const matchesStock = !filters.inStock || item.inStock;
-    const matchesPrice = !filters.maxPrice || item.price <= Number(filters.maxPrice);
-    
-    return matchesSearch && matchesCategory && matchesStock && matchesPrice;
-  });
-
-  const categories = [...new Set(items.map(item => item.category))];
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedFavorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+      dispatch({ type: 'INITIALIZE_FAVORITES', payload: savedFavorites });
+    }
+  }, []);
 
   return (
-    <ItemsContext.Provider value={{
-      items: filteredItems,
-      filters,
-      setFilters,
-      updateItem,
-      categories,
-    }}>
+    <FavoritesContext.Provider value={{ state, dispatch }}>
       {children}
-    </ItemsContext.Provider>
+    </FavoritesContext.Provider>
   );
 }
 
-export function useItems() {
-  return useContext(ItemsContext);
+export function useFavorites() {
+  return useContext(FavoritesContext);
 }
